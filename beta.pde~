@@ -1,0 +1,21 @@
+import java.util.*;
+
+void setup() {
+  size(1024, 1024);
+  List<Vertex> vis = new ArrayList<Vertex>();
+  for (int i=0; i<5; i++) {
+    Vertex w = new Vertex(int(random(width)), int(random(height)));
+    for (Vertex v: vis) w.add(v);
+    vis.add(w);
+  }
+  vis.get(0).print();
+}
+
+/*void draw() {
+  if (mousePressed) {
+    fill(0);
+  } else {
+    fill(255);
+  }
+  ellipse(mouseX, mouseY, 80, 80);
+}*/

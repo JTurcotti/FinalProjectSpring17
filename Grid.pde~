@@ -1,0 +1,6 @@
+import java.util.*;
+
+public class Grid {
+    Queue<Vertex> spurs;
+    Vertex zero;
+    
