@@ -39,6 +39,14 @@ public class Grid {
 	return places.values();
     }
 
+    public Set<Vertex> movingTips() {
+	Set<Vertex> set = new HashSet<Vertex>();
+	for (Queue<Vertex> direction: directions)
+	    for (Vertex v: direction)
+		set.add(v);
+	return set;
+    }
+
     //checks if the position of a vertex is unoccupied and within the viewing space
     private boolean valid(Vertex v) {
 	return !places.containsKey(v.loc) &&
@@ -60,24 +68,21 @@ public class Grid {
     }
 
     //non-deterministic, determines conditions to procedd tip in directiton without sprouting
-    private boolean proceed(int direction, Vertex tip) {
+    boolean proceed(int direction, Vertex tip) {
 	return (random(1)>chance || //probably occurs
 		tip.age++ < 2 || //or if too young to have a kid
 		(tip.age > 100) && (tip.age<105) || //or if just had a kid
 		!clearInDirection(direction, step*2, tip)); //or if too close
     }
 
-    private boolean stationary(Vertex tip) {
-	for (Queue<Vertex> direction: directions)
-	    if (direction.contains(tip))
-		return false;
-	return true;
+    boolean stationary(Vertex v) {
+	return !movingTips().contains(v);
     }
 	
     private void interupt(Vertex tip) {
 	//bar-<----tip-<----bar.parent (par)
 	Vertex bar = places.get(tip.loc);
-	if (bar.loc.equals(tip.loc) && stationary(tip) && false) {//hit a stationary vertex
+	if (bar.loc.equals(tip.loc) && stationary(bar)) {//hit a stationary vertex
 	    Vertex parent = tip.neighbors.getFirst();
 	    parent.add(bar); //attach prior node to hit one
 	    parent.remove(tip); //destroy tip
