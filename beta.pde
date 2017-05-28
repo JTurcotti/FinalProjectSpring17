@@ -4,37 +4,28 @@ Grid g;
 Vertex root;
 
 void setup() {
-    size(1536, 1536);
+    background(255);
+    size(2048, 2048);
     root = new Vertex(width/2, height/2);
     g = new Grid(root);
+    ellipseMode(RADIUS);
+    fill(255, 0, 0);
   }
 
 void draw() {
-    keyReleased();
+    growCycle();
+    if (mousePressed)
+	for (Vertex v: g.vertices)
+	    ellipse(v.x(), v.y(), 2, 2);
 }
 
-void keyReleased() {
+void mouseReleased() {
+    background(255);
+    g.print();
+}
+
+void growCycle() {
     for (Vertex v: g.grow())
 	v.print();
     println(g.size());
-}
-// =========TESTING METHODS===========
-
-
-
-void vertMouse(List<Vertex> lv) {
-      Vertex v = new Vertex(mouseX, mouseY);
-      for (Vertex w: lv) v.add(w);
-      lv.add(v);
-      v.print();
-}
-    
-void vertGrid(List<Vertex> lv) {
-    int n = 10;
-    
-    for (int i=0; i<n*n; i++) {
-	Vertex v = new Vertex(width / (n-1) * (i%n), height/(n-1) * (i/n));
-	for (Vertex w: lv) v.add(w);
-	lv.add(v);
-    }
 }
