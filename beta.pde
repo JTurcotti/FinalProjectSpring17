@@ -2,6 +2,8 @@ import java.util.*;
 
 Grid g;
 Vertex root;
+int i;
+
 
 void setup() {
     background(255);
@@ -10,10 +12,12 @@ void setup() {
     g = new Grid(root);
     ellipseMode(RADIUS);
     fill(255, 0, 0);
+
+    i=0;
   }
 
 void draw() {
-    growCycle();
+    if (i++%5==0) growCycle();
     if (mousePressed)
 	for (Vertex v: g.vertices)
 	    ellipse(v.x(), v.y(), 2, 2);
