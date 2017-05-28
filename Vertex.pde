@@ -3,7 +3,6 @@ import java.util.*;
 public class Vertex implements Comparable<Vertex> {
     Location loc; //current location
     LinkedList<Vertex> neighbors;
-    Vertex parent; //only non-null if created with Vertex(Vertex) constructor
 
     int age; //number of growth cycles since creation
 
@@ -25,7 +24,6 @@ public class Vertex implements Comparable<Vertex> {
     public Vertex(Vertex v) {
 	this(v.x(), v.y());
 	add(v);
-	parent = v;
     }
 
     public Vertex(Location l) {
@@ -88,6 +86,10 @@ public class Vertex implements Comparable<Vertex> {
 
     public void push(int direction, int step) {
 	loc.push(direction, step);
+    }
+
+    public double distance(Vertex other) {
+	return loc.distance(other.loc);
     }
 
 }

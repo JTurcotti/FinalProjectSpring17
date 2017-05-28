@@ -26,6 +26,10 @@ public class Location implements Comparable<Location> {
 	    x += step;
     }
 
+    public double distance(Location other) {
+	return Math.pow(((this.x - other.x)*(this.x - other.x)+(this.y - other.y)*(this.y - other.y)), 0.5);
+    }
+
     @Override
     public String toString() {
 	return "(" + this.x + ", " + this.y + ")";

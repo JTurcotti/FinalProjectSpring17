@@ -75,30 +75,39 @@ public class Grid {
 		    if (valid(tip))// if tip in a valid position
 			direction.add(tip);// cycle back to end of queue
 		    if (places.containsKey(tip.loc)) {//if hit a line
-			//bar-<----tip-<----bar.parent
+			//bar-<----tip-<----bar.parent (par)
 			Vertex bar = places.get(tip.loc);
 			if (bar.loc.equals(tip.loc)) {//hit a vertex
 			    Vertex parent = tip.neighbors.getFirst();
 			    parent.add(bar); //attach prior node to hit one
 			    parent.remove(tip); //destroy tip
 			} else {
-			    Vertex par = bar.parent;
-			    
-			    bar.parent = tip; //interupt
-			    tip.parent = par; // big bug here rmb that
+			    Vertex par = bar.neighbors.getFirst(); //note that because neighbors are a list, the first one will be the parent (possibly 2 too)
+			    if (par.distance(tip) + tip.distance(bar) == par.distance(bar)) { //check to make sure tip is between bar and par
+				
+				bar.neighbors.addFirst(tip); //just switch around all the various parenthoods
+
+			    } else { //this means bar has a second parent
+
+				par = bar.neighbors.get(1); //try second possible parent
+
+				bar.neighbors.add(1, tip); //this is the only diff from before
+			
+			    }
+			    tip.neighbors.add(bar); //finish switching neighbors and parents
 			    bar.remove(par);
-			    tip.add(par);
-			    tip.add(bar);
+			    tip.neighbors.add(1, par);
+			    par.neighbors.add(tip);		
 			}
 		    }	    
 		} else {
-			//sprout new tips (3)
+		    //sprout new tips (3)
 		    for (int k=0; k<4; k++)  { //directions
 			if (i-k!=2 && k-i!=2) { //don't sprout in opposite of current direction
 			    Queue<Vertex> direction2 = directions.get(k);
 			    
 			    Vertex tip2 = new Vertex(tip);
-
+			    
 			    if (i==k)
 				tip2.age = 100; //the sprout that continues in the same direction skips a generation
 			    
