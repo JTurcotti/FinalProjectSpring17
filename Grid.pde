@@ -12,7 +12,7 @@ public class Grid {
     
     Vertex root;
     
-    static final int step = 10;  //growth of brances each step
+    static final int step = 30;  //growth of brances each step
     static final float chance = 0.5;  //chance of sprouting new branch each step
     
     public Grid(Vertex root) {
@@ -61,7 +61,8 @@ public class Grid {
 		Vertex tip = direction.remove(); //pull a tip
 
 		if (random(1)>chance || //probably occurs
-		    tip.age++ < 2 || //or if too young
+		    tip.age++ < 2 || //or if too young to have a kid
+		    (tip.age > 100) && (tip.age<105) || //or if just had a kid
 		    !clearInDirection(i, step*2, tip)) { //or if too close
 		    
 		    //don't sprout new tip
@@ -79,6 +80,10 @@ public class Grid {
 			    Queue<Vertex> direction2 = directions.get(k);
 			    
 			    Vertex tip2 = new Vertex(tip);
+
+			    if (i==k)
+				tip2.age = 100; //the sprout that continues in the same direction skips a generation
+			    
 			    fresh.add(tip2);
 			    direction2.add(tip2);
 			    vertices.add(tip2);

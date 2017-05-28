@@ -8,6 +8,10 @@ public class Location {
 	this.y = y;
     }
 
+    public Location(Location l) {
+	this(l.x, l.y);
+    }
+
     /* 0-down
        1-right
        2-up
