@@ -8,7 +8,9 @@ public class Grid {
     Map<Location, Vertex> places;
     
     //actual Vertex instances
-    Set<Vertex> vertices;
+    //Set<Vertex> vertices; replace by vertices() method
+
+    List<Vertex> fresh; //each grow cycle, stores new tips
     
     Vertex root;
     
@@ -22,17 +24,19 @@ public class Grid {
 	this.root = root;
 	directions = new ArrayList<Queue<Vertex>>();
         places = new HashMap<Location, Vertex>();
-	vertices = new TreeSet<Vertex>();
-	vertices.add(root);
+	places.put(root.location(), root);
 	for (int i=0; i<4; i++) {
 	    Queue<Vertex> direction = new ArrayDeque<Vertex>();
 	    directions.add(direction);
 	    Vertex v = new Vertex(root);
 	    direction.add(v);
-	    vertices.add(v);
 	} //creates direction queues, each with one linked copy of the root
 
 	println("grid constructed");
+    }
+
+    public Collection<Vertex> vertices() {
+	return places.values();
     }
 
     //checks if the position of a vertex is unoccupied and within the viewing space
@@ -55,51 +59,68 @@ public class Grid {
 	return true;
     }
 
+    //non-deterministic, determines conditions to procedd tip in directiton without sprouting
+    private boolean proceed(int direction, Vertex tip) {
+	return (random(1)>chance || //probably occurs
+		tip.age++ < 2 || //or if too young to have a kid
+		(tip.age > 100) && (tip.age<105) || //or if just had a kid
+		!clearInDirection(direction, step*2, tip)); //or if too close
+    }
+
+    private boolean stationary(Vertex tip) {
+	for (Queue<Vertex> direction: directions)
+	    if (direction.contains(tip))
+		return false;
+	return true;
+    }
+	
+    private void interupt(Vertex tip) {
+	//bar-<----tip-<----bar.parent (par)
+	Vertex bar = places.get(tip.loc);
+	if (bar.loc.equals(tip.loc) && stationary(tip) && false) {//hit a stationary vertex
+	    Vertex parent = tip.neighbors.getFirst();
+	    parent.add(bar); //attach prior node to hit one
+	    parent.remove(tip); //destroy tip
+	} else {
+	    Vertex par = bar.neighbors.getFirst(); //note that because neighbors are a list, the first one will be the parent (possibly 2 too)
+	    if (par.distance(tip) + tip.distance(bar) == par.distance(bar)) { //check to make sure tip is between bar and par
+		
+		bar.neighbors.addFirst(tip); //just switch around all the various parenthoods
+		
+	    } else { //this means bar has a second parent
+		
+		par = bar.neighbors.get(1); //try second possible parent
+		
+		bar.neighbors.add(1, tip); //this is the only diff from before
+		
+	    }
+	    tip.neighbors.add(bar); //finish switching neighbors and parents
+	    bar.remove(par);
+	    tip.neighbors.add(1, par);
+	    par.neighbors.add(tip);		
+
+	}
+    }
+    
     List<Vertex> grow() { //returns moved/new Vertices
-	List<Vertex> fresh = new ArrayList<Vertex>();
+	fresh = new ArrayList<Vertex>();
 	
 	directions: for (int i=0; i<4; i++) {
 	    Queue<Vertex> direction = directions.get(i);
 	    tips: for (int j = direction.size(); j>0; j--) {
 		Vertex tip = direction.remove(); //pull a tip
-
-		if (random(1)>chance || //probably occurs
-		    tip.age++ < 2 || //or if too young to have a kid
-		    (tip.age > 100) && (tip.age<105) || //or if just had a kid
-		    !clearInDirection(i, step*2, tip)) { //or if too close
-		    
+		
+		if (proceed(i, tip)) {
+			
 		    //don't sprout new tip
 		    tip.push(i, step);
 		    fresh.add(tip);
 		    
 		    if (valid(tip))// if tip in a valid position
 			direction.add(tip);// cycle back to end of queue
-		    if (places.containsKey(tip.loc)) {//if hit a line
-			//bar-<----tip-<----bar.parent (par)
-			Vertex bar = places.get(tip.loc);
-			if (bar.loc.equals(tip.loc)) {//hit a vertex
-			    Vertex parent = tip.neighbors.getFirst();
-			    parent.add(bar); //attach prior node to hit one
-			    parent.remove(tip); //destroy tip
-			} else {
-			    Vertex par = bar.neighbors.getFirst(); //note that because neighbors are a list, the first one will be the parent (possibly 2 too)
-			    if (par.distance(tip) + tip.distance(bar) == par.distance(bar)) { //check to make sure tip is between bar and par
-				
-				bar.neighbors.addFirst(tip); //just switch around all the various parenthoods
-
-			    } else { //this means bar has a second parent
-
-				par = bar.neighbors.get(1); //try second possible parent
-
-				bar.neighbors.add(1, tip); //this is the only diff from before
-			
-			    }
-			    tip.neighbors.add(bar); //finish switching neighbors and parents
-			    bar.remove(par);
-			    tip.neighbors.add(1, par);
-			    par.neighbors.add(tip);		
-			}
-		    }	    
+		    if (places.containsKey(tip.loc))//if hit a line
+			interupt(tip);
+		    
 		} else {
 		    //sprout new tips (3)
 		    for (int k=0; k<4; k++)  { //directions
@@ -113,7 +134,6 @@ public class Grid {
 			    
 			    fresh.add(tip2);
 			    direction2.add(tip2);
-			    vertices.add(tip2);
 			} //add a linked copy to each OTHER direction (old tip stops growing)
 		    }
 		}
