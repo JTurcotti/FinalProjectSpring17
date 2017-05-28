@@ -4,22 +4,25 @@ public class Grid {
     //list of 4 vertex queues, corresponding to the four directions (see Vertex)
     List<Queue<Vertex>> directions;
     
-    //locations already included in this grid
-    Set<Location> occupied;
+    //locations already included in this grid, maps locations to the vertex associated with them
+    Map<Location, Vertex> places;
     
     //actual Vertex instances
-    List<Vertex> vertices;
+    Set<Vertex> vertices;
     
     Vertex root;
     
     static final int step = 30;  //growth of brances each step
     static final float chance = 0.5;  //chance of sprouting new branch each step
+
+    //null constructor for testing only, never use
+    public Grid() {}
     
     public Grid(Vertex root) {
 	this.root = root;
 	directions = new ArrayList<Queue<Vertex>>();
-	occupied = new HashSet<Location>();
-	vertices = new LinkedList<Vertex>();
+        places = new HashMap<Location, Vertex>();
+	vertices = new TreeSet<Vertex>();
 	vertices.add(root);
 	for (int i=0; i<4; i++) {
 	    Queue<Vertex> direction = new ArrayDeque<Vertex>();
@@ -34,7 +37,7 @@ public class Grid {
 
     //checks if the position of a vertex is unoccupied and within the viewing space
     private boolean valid(Vertex v) {
-	return !occupied.contains(v.loc) &&
+	return !places.containsKey(v.loc) &&
 	    v.x() < width &&
 	    v.x() > 0 &&
 	    v.y() < height &&
@@ -46,12 +49,12 @@ public class Grid {
 	Location w = v.location();
 	while (dist-->0) {
 	    w.push(direction, 1);
-	    if (occupied.contains(w))
+	    if (places.containsKey(w))
 		return false;
 	}
 	return true;
     }
-    
+
     List<Vertex> grow() { //returns moved/new Vertices
 	List<Vertex> fresh = new ArrayList<Vertex>();
 	
@@ -71,8 +74,23 @@ public class Grid {
 		    
 		    if (valid(tip))// if tip in a valid position
 			direction.add(tip);// cycle back to end of queue
-		    
-		    
+		    if (places.containsKey(tip.loc)) {//if hit a line
+			//bar-<----tip-<----bar.parent
+			Vertex bar = places.get(tip.loc);
+			if (bar.loc.equals(tip.loc)) {//hit a vertex
+			    Vertex parent = tip.neighbors.getFirst();
+			    parent.add(bar); //attach prior node to hit one
+			    parent.remove(tip); //destroy tip
+			} else {
+			    Vertex par = bar.parent;
+			    
+			    bar.parent = tip; //interupt
+			    tip.parent = par; // big bug here rmb that
+			    bar.remove(par);
+			    tip.add(par);
+			    tip.add(bar);
+			}
+		    }	    
 		} else {
 			//sprout new tips (3)
 		    for (int k=0; k<4; k++)  { //directions
@@ -95,7 +113,7 @@ public class Grid {
 	
 	for (Vertex tip: fresh)
 	    //mark new tips as occupied
-	    occupied.add(tip.location());
+	    places.put(tip.location(), tip);
 	
 	return fresh;
     }

@@ -1,8 +1,9 @@
 import java.util.*;
 
-public class Vertex {
+public class Vertex implements Comparable<Vertex> {
     Location loc; //current location
-    List<Vertex> neighbors;
+    LinkedList<Vertex> neighbors;
+    Vertex parent; //only non-null if created with Vertex(Vertex) constructor
 
     int age; //number of growth cycles since creation
 
@@ -23,14 +24,24 @@ public class Vertex {
 
     public Vertex(Vertex v) {
 	this(v.x(), v.y());
-	v.add(this);
+	add(v);
+	parent = v;
     }
 
+    public Vertex(Location l) {
+	this(l.x, l.y);
+    }
+
+    //note the following two methods link/unlink in both directions
     public void add(Vertex v) {
 	v.neighbors.add(this);
 	neighbors.add(v);
     }
 
+    public void remove(Vertex v) {
+	v.neighbors.remove(this);
+	neighbors.remove(v);
+    }
 
     public void print() {
 	for (Vertex n: neighbors)
@@ -53,9 +64,26 @@ public class Vertex {
 	}
     }
 
+    //following methods come from wrapped location
+    
     @Override
     public String toString() {
 	return loc.toString();
+    }
+
+    @Override
+    public boolean equals(Object o) {
+	return loc.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+	return loc.hashCode();
+    }
+
+    @Override
+    public int compareTo(Vertex other) {
+	return loc.compareTo(other.loc);
     }
 
     public void push(int direction, int step) {

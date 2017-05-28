@@ -1,6 +1,6 @@
 import java.util.*;
 
-public class Location {
+public class Location implements Comparable<Location> {
     int x, y;
 
     public Location(int x, int y) {
@@ -41,5 +41,16 @@ public class Location {
     @Override
     public int hashCode() {
 	return x<<16 + y;
+    }
+
+    @Override
+    public int compareTo(Location other) {
+	return hashCode() - other.hashCode();
+    }
+
+    public void print() {
+	ellipseMode(RADIUS);
+	fill(255, 0, 0);
+	ellipse(x, y, 5, 5);
     }
 }
