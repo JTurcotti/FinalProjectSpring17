@@ -1,20 +1,20 @@
 import java.util.*;
 
-public class Lot {
+public class Block {
     List<Location> corners;
 
-    public Lot() {
+    public Block() {
 	corners = new LinkedList<Location>();
     }
     
-    public Lot(Collection<Location> c) {
+    public Block(Collection<Location> c) {
 	this()
 	for (Location l: c) {
 	    corners.add(new Location(l));
 	}
     }
 
-    public Lot(Collection<Vertex> c) {
+    public Block(Collection<Vertex> c) {
 	this();
 	for (Vertex v: c) {
 	    corners.add(v.location());
