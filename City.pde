@@ -56,31 +56,41 @@ public class City {
     Grid streets;
     TreeSet<Block> blocks;
 
-    //takes the grid of vertices and populates blocks with the blocks between them
-    public void genBlocks() {
-	blocks = new TreeSet<Block>(); //need element access, perfomance decrease is ok because only run once
-
-	Vertex one = streets.root;
-	Vertex two = one.neighbors.get(0); //doesn't matter which neighbor
-
+    public City(Grid streets) {
+	this.streets = streets;
+	blocks = new TreeSet<Block>();  //need element access, perfomance decrease is ok because only run once
+    }
+    
+    public Block blockFromVertex(Vertex v) {
+	Vertex one = v;
+	Vertex two = one.neighbors.get(0);
+	
 	Queue<Path> eval = new ArrayDeque<Path>();
 	eval.add((new Path(null, one, one, 0).next(two)));
 	Path p;
 
 	do { //this searches breadth first, and is thus gauranteed to find a minimal polygon block
 	    p = eval.remove();
-	    for (Vertex v: p.head.neighbors)
-		if (v!=p.prev.head)
-		    eval.add(p.next(v));
+	    for (Vertex w: p.head.neighbors)
+		if (w!=p.prev.head)
+		    eval.add(p.next(w));
 	} while (!p.isCircular());
 	
-	Block first = new Block();
-	
-	for (Vertex v: p)
-	    first.corners.add(v);
-	first.normalize();
-	println(first);
-	blocks.add(first);
+	Block b = new Block();
+
+	for (Vertex w: p)
+	    b.corners.add(w);
+	b.normalize();
+	return b;
+    }
+    
+    //takes the grid of vertices and populates blocks with the blocks between them
+    public void genBlocks() {
+	for (Vertex v: streets.vertices()) {
+	    Block b = blockFromVertex(v);
+	    b.print(int(random(256)));
+	    blocks.add(b);
+	}
     }
 }
 	    
