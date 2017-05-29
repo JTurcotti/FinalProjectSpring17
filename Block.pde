@@ -38,14 +38,7 @@ public class Block implements Comparable<Block> {
     public boolean equals(Object o) {
 	if (!(o instanceof Block)) return false;
 	Block b = (Block) o;
-	Iterator<Vertex> i1 = corners.iterator();
-	Iterator<Vertex> i2 = b.corners.iterator();
-	while (i1.hasNext() && i2.hasNext())
-	    if (!i1.next().equals(i2.next()))
-		return false;
-	if (i1.hasNext() || i2.hasNext())
-	    return false;
-	return true;
+	return this.hashCode() == b.hashCode();
     }
 
     @Override
@@ -63,12 +56,16 @@ public class Block implements Comparable<Block> {
     }
 
     //mainly for testing
-    public void print() {
-	fill(0);
+    public void print(int grey) {
+	fill(grey);
 	beginShape();
 	for (Vertex v: corners)
 	    vertex(v.x(), v.y());
 	endShape(CLOSE);
+    }
+
+    public void print() {
+	print(0);
     }
 
     @Override
