@@ -6,7 +6,7 @@ public class Grid {
     
     //locations already included in this grid, maps locations to the vertex associated with them
     Map<Location, Vertex> places;
-    
+    Collection<Vertex> vertices;
     //actual Vertex instances
     //Set<Vertex> vertices; replace by vertices() method
 
@@ -24,6 +24,7 @@ public class Grid {
 	this.root = root;
 	directions = new ArrayList<Queue<Vertex>>();
         places = new HashMap<Location, Vertex>();
+	vertices = places.values();
 	places.put(root.location(), root);
 	for (int i=0; i<4; i++) {
 	    Queue<Vertex> direction = new ArrayDeque<Vertex>();
@@ -35,8 +36,8 @@ public class Grid {
 	println("grid constructed");
     }
 
-    public Collection<Vertex> vertices() {
-	return places.values();
+    public Set<Vertex> vertices() {
+	return new HashSet<Vertex>(vertices);
     }
 
     public Set<Vertex> movingTips() {
@@ -75,35 +76,27 @@ public class Grid {
 		!clearInDirection(direction, step*2, tip)); //or if too close
     }
 
+
+    //this is EXTREMELY contrived, but its the only thing that seems to work.....
     boolean stationary(Vertex v) {
 	return !movingTips().contains(v);
     }
 	
     private void interupt(Vertex tip) {
 	//bar-<----tip-<----bar.parent (par)
-	Vertex bar = places.get(tip.loc);
-	if (bar.loc.equals(tip.loc) && stationary(bar)) {//hit a stationary vertex
-	    Vertex parent = tip.neighbors.getFirst();
-	    parent.add(bar); //attach prior node to hit one
-	    parent.remove(tip); //destroy tip
-	} else {
-	    Vertex par = bar.neighbors.getFirst(); //note that because neighbors are a list, the first one will be the parent (possibly 2 too)
-	    if (par.distance(tip) + tip.distance(bar) == par.distance(bar)) { //check to make sure tip is between bar and par
-		
-		bar.neighbors.addFirst(tip); //just switch around all the various parenthoods
-		
-	    } else { //this means bar has a second parent
-		
-		par = bar.neighbors.get(1); //try second possible parent
-		
-		bar.neighbors.add(1, tip); //this is the only diff from before
-		
-	    }
-	    tip.neighbors.add(bar); //finish switching neighbors and parents
-	    bar.remove(par);
-	    tip.neighbors.add(1, par);
-	    par.neighbors.add(tip);		
-
+	Vertex one = places.get(tip.loc);
+	if (one.loc.equals(tip.loc) && stationary(one)) {//hit a stationary vertex
+	    Vertex parent = tip.prev.getFirst(); //only HAS one parent
+	    parent.next.add(one); //attach prior node to hit one
+	    one.prev.add(parent);
+	    parent.next.remove(tip); //destroy references to tip
+	} else { //moving vertex at or past hit point
+	    for (Vertex two: one.prev) //check all possible parents of bar
+		if (one.distance(tip) + tip.distance(two) - one.distance(two) < 0.1) {//check to make sure tip is between bar and par
+		    tip.addBetween(two, one);
+		    break;
+		}
+	    
 	}
     }
     
@@ -123,7 +116,7 @@ public class Grid {
 		    
 		    if (valid(tip))// if tip in a valid position
 			direction.add(tip);// cycle back to end of queue
-		    if (places.containsKey(tip.loc))//if hit a line
+		    if (false && places.containsKey(tip.loc))//if hit a line
 			interupt(tip);
 		    
 		} else {

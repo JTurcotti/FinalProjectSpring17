@@ -2,7 +2,8 @@ import java.util.*;
 
 public class Vertex implements Comparable<Vertex> {
     Location loc; //current location
-    LinkedList<Vertex> neighbors;
+    LinkedList<Vertex> next;
+    LinkedList<Vertex> prev;
 
     int age; //number of growth cycles since creation
 
@@ -17,47 +18,57 @@ public class Vertex implements Comparable<Vertex> {
     
     public Vertex(int x, int y) {
 	loc = new Location(x, y);
-	neighbors = new LinkedList<Vertex>();
+	next = new LinkedList<Vertex>();
+	prev = new LinkedList<Vertex>();
 	age = 0;
     }
 
     public Vertex(Vertex v) {
 	this(v.x(), v.y());
-	add(v);
+	this.prev.add(v);
+	v.next.add(this);
+	
     }
 
     public Vertex(Location l) {
 	this(l.x, l.y);
     }
 
-    //note the following two methods link/unlink in both directions
-    public void add(Vertex v) {
-	v.neighbors.add(this);
-	neighbors.add(v);
+    public int size() {
+	return next.size() + prev.size();
     }
 
-    public void remove(Vertex v) {
-	v.neighbors.remove(this);
-	neighbors.remove(v);
+    public void addBetween(Vertex v, Vertex w) {//v.next.contains(w) and w.prev.contains(v)
+	v.next.remove(w);
+	w.prev.remove(v);
+
+	v.next.add(this);
+	w.prev.add(this);
+
+	this.next.add(w);
+	this.prev.add(v);
+    }
+
+    public LinkedList<Vertex> neighbors() {
+	LinkedList<Vertex> neighbors = new LinkedList<Vertex>();
+	neighbors.addAll(prev);
+	neighbors.addAll(next);
+	return neighbors;
     }
 
     public void print() {
-	for (Vertex n: neighbors)
+	for (Vertex n: neighbors())
 	    line(this.x(), this.y(), n.x(), n.y());
     }
     
-    public void printNet() { //prints network containing this node. Possiblely faster implemenation
-	Set<Vertex> visited = new HashSet<Vertex>();
+    public void printNet() { //prints network containing this node at center
 	Stack<Vertex> eval = new Stack<Vertex>();
 	eval.push(this);
 	while (!eval.empty()) {
 	    Vertex v = eval.pop();
-	    visited.add(v);
-	    for (Vertex n: v.neighbors) {
-		if (!visited.contains(n)) {
-		    line(v.x(), v.y(), n.x(), n.y());
-		    eval.push(n);
-		}
+	    for (Vertex n: v.next) {
+		line(v.x(), v.y(), n.x(), n.y());
+		eval.push(n);
 	    }
 	}
     }
