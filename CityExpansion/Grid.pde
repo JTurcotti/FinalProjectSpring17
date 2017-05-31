@@ -5,11 +5,10 @@ public class Grid {
     List<Queue<Vertex>> directions;
     
     //locations already included in this grid, maps locations to the vertex associated with them
-    Map<Location, Vertex> places;
-    Collection<Vertex> vertices;
-    //actual Vertex instances
-    //Set<Vertex> vertices; replace by vertices() method
+    Set<Location> gridLocations;
 
+    Set<Vertex> vertices;
+    
     List<Vertex> fresh; //each grow cycle, stores new tips
     
     Vertex root;
@@ -21,48 +20,49 @@ public class Grid {
     public Grid() {}
     
     public Grid(Vertex root) {
-	this.root = root;
 	directions = new ArrayList<Queue<Vertex>>();
-        places = new HashMap<Location, Vertex>();
-	vertices = places.values();
-	places.put(root.location(), root);
+	gridLocations = new HashSet<Location>();
+
+	vertices = new HashSet<Vertex>();
+	
+	this.root = root;
+	vertices.add(root);
+	
 	for (int i=0; i<4; i++) {
 	    Queue<Vertex> direction = new ArrayDeque<Vertex>();
 	    directions.add(direction);
 	    Vertex v = new Vertex(root);
 	    direction.add(v);
+	    vertices.add(v);
 	} //creates direction queues, each with one linked copy of the root
 
 	println("grid constructed");
     }
 
-    public Set<Vertex> vertices() {
-	return new HashSet<Vertex>(vertices);
-    }
-
     public Set<Vertex> movingTips() {
 	Set<Vertex> set = new HashSet<Vertex>();
 	for (Queue<Vertex> direction: directions)
-	    for (Vertex v: direction)
-		set.add(v);
+	    set.addAll(direction);
 	return set;
     }
 
+    int x = 100; //set to 0, else for debugging
+    
     //checks if the position of a vertex is unoccupied and within the viewing space
     private boolean valid(Vertex v) {
-	return !places.containsKey(v.loc) &&
-	    v.x() < width &&
-	    v.x() > 0 &&
-	    v.y() < height &&
-	    v.y() > 0;
+	return !present(v.loc) &&
+	    v.x() < width - x &&
+	    v.x() > 0 + x &&
+	    v.y() < height - x &&
+	    v.y() > 0 + x ;
     }
 
     //tests if grid is clear in a given direction for a given distance from v
-    private boolean clearInDirection(int direction, int dist, Vertex v) {
+    private boolean clearInDirection(int direction, int steps, Vertex v) {
 	Location w = v.location();
-	while (dist-->0) {
-	    w.push(direction, 1);
-	    if (places.containsKey(w))
+	while (steps-->0) {
+	    w.push(direction, step);
+	    if (present(w))
 		return false;
 	}
 	return true;
@@ -73,36 +73,13 @@ public class Grid {
 	return (random(1)>chance || //probably occurs
 		tip.age++ < 2 || //or if too young to have a kid
 		(tip.age > 100) && (tip.age<105) || //or if just had a kid
-		!clearInDirection(direction, step*2, tip)); //or if too close
+		tip.age >=1000 || //or if on edge
+		!clearInDirection(direction, 2, tip)); //or if too close
     }
 
 
-    //this is EXTREMELY contrived, but its the only thing that seems to work.....
-    boolean stationary(Vertex v) {
-	return !movingTips().contains(v);
-    }
-	
-    private void interupt(Vertex tip) {
-	//bar-<----tip-<----bar.parent (par)
-	Vertex one = places.get(tip.loc);
-	if (one.loc.equals(tip.loc) && stationary(one)) {//hit a stationary vertex
-	    Vertex parent = tip.prev.getFirst(); //only HAS one parent
-	    parent.next.add(one); //attach prior node to hit one
-	    one.prev.add(parent);
-	    parent.next.remove(tip); //destroy references to tip
-	} else { //moving vertex at or past hit point
-	    for (Vertex two: one.prev) //check all possible parents of bar
-		if (one.distance(tip) + tip.distance(two) - one.distance(two) < 0.1) {//check to make sure tip is between bar and par
-		    tip.addBetween(two, one);
-		    break;
-		}
-	    
-	}
-    }
-    
     List<Vertex> grow() { //returns moved/new Vertices
 	fresh = new ArrayList<Vertex>();
-	
 	directions: for (int i=0; i<4; i++) {
 	    Queue<Vertex> direction = directions.get(i);
 	    tips: for (int j = direction.size(); j>0; j--) {
@@ -111,13 +88,18 @@ public class Grid {
 		if (proceed(i, tip)) {
 			
 		    //don't sprout new tip
-		    tip.push(i, step);
+		    for (int k=0; k<step; k++) {
+			gridLocations.add(tip.location());
+			tip.push(i, 1);
+		    }
 		    fresh.add(tip);
-		    
+
 		    if (valid(tip))// if tip in a valid position
 			direction.add(tip);// cycle back to end of queue
-		    if (false && places.containsKey(tip.loc))//if hit a line
-			interupt(tip);
+		    
+			
+		    gridLocations.add(tip.location());//then proceed to mark location invalid for future tipes
+				    
 		    
 		} else {
 		    //sprout new tips (3)
@@ -131,19 +113,64 @@ public class Grid {
 				tip2.age = 100; //the sprout that continues in the same direction skips a generation
 			    
 			    fresh.add(tip2);
+			    vertices.add(tip2);
 			    direction2.add(tip2);
 			} //add a linked copy to each OTHER direction (old tip stops growing)
 		    }
 		}
 	    }
 	}
-	
-	for (Vertex tip: fresh)
-	    //mark new tips as occupied
-	    places.put(tip.location(), tip);
-	
 	return fresh;
     }
+
+    boolean present(Location l) {
+	return gridLocations.contains(l);
+    }
+
+    Vertex toVertices() {
+	Vertex root = new Vertex(this.root.x(), this.root.y());
+
+	Stack<Vertex> eval = new Stack<Vertex>();
+	Map<Location, Vertex> positions = new HashMap<Location, Vertex>();
+	eval.add(root);
+	while(!eval.empty()) {
+	    Vertex v = eval.pop();
+	    ellipse(v.loc);
+	    println("pulling " + v);
+		
+	    for (int dir=0; dir<4; dir++) {
+		Location l = v.location();
+		println("location at " + l + " in direction " + dir);
+		boolean expandable = true;
+		do {
+		    if (!present(l.adjacent(dir))) {
+			expandable = false;
+			break;
+		    }
+		    l.push(dir, 1);
+		    println("moving once to " + l);
+		} while (!present(l.adjacent((dir + 1)%4)) &&
+			 !present(l.adjacent((dir - 1)%4)));
+		Vertex w;
+		if (positions.containsKey(l))
+		    w = positions.get(l);
+		else {
+		    w = new Vertex(l);
+		    positions.put(l, w);
+		    if (expandable) {
+			eval.push(w);
+			println("pushing " + w);
+		    }
+		}
+		v.add(w);
+		w.add(v);
+	    }
+	}
+	println("done");
+	return root;
+    }
+	       
+			
     
     public void print() {
 	root.printNet();

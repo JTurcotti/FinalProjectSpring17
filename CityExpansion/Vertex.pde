@@ -2,8 +2,7 @@ import java.util.*;
 
 public class Vertex implements Comparable<Vertex> {
     Location loc; //current location
-    LinkedList<Vertex> next;
-    LinkedList<Vertex> prev;
+    Set<Vertex> next;
 
     int age; //number of growth cycles since creation
 
@@ -18,16 +17,13 @@ public class Vertex implements Comparable<Vertex> {
     
     public Vertex(int x, int y) {
 	loc = new Location(x, y);
-	next = new LinkedList<Vertex>();
-	prev = new LinkedList<Vertex>();
+	next = new HashSet<Vertex>();
 	age = 0;
     }
 
     public Vertex(Vertex v) {
 	this(v.x(), v.y());
-	this.prev.add(v);
-	v.next.add(this);
-	
+	v.add(this);
     }
 
     public Vertex(Location l) {
@@ -35,40 +31,25 @@ public class Vertex implements Comparable<Vertex> {
     }
 
     public int size() {
-	return next.size() + prev.size();
+	return next.size();
     }
 
-    public void addBetween(Vertex v, Vertex w) {//v.next.contains(w) and w.prev.contains(v)
-	v.next.remove(w);
-	w.prev.remove(v);
-
-	v.next.add(this);
-	w.prev.add(this);
-
-	this.next.add(w);
-	this.prev.add(v);
-    }
-
-    public LinkedList<Vertex> neighbors() {
-	LinkedList<Vertex> neighbors = new LinkedList<Vertex>();
-	neighbors.addAll(prev);
-	neighbors.addAll(next);
-	return neighbors;
-    }
-
-    public void print() {
-	for (Vertex n: neighbors())
-	    line(this.x(), this.y(), n.x(), n.y());
+    void add(Vertex v) {
+	next.add(v);
     }
     
     public void printNet() { //prints network containing this node at center
 	Stack<Vertex> eval = new Stack<Vertex>();
+	Set<Vertex> visited = new HashSet<Vertex>();
 	eval.push(this);
 	while (!eval.empty()) {
 	    Vertex v = eval.pop();
+	    visited.add(v);
 	    for (Vertex n: v.next) {
 		line(v.x(), v.y(), n.x(), n.y());
-		eval.push(n);
+				    
+		if (!visited.contains(n))
+		    eval.push(n);
 	    }
 	}
     }

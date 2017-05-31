@@ -26,6 +26,12 @@ public class Location implements Comparable<Location> {
 	    x += step;
     }
 
+    public Location adjacent(int direction) {
+	Location l = new Location(this);
+	l.push(direction, 1);
+	return l;
+    }
+
     public double distance(Location other) {
 	return Math.pow(((this.x - other.x)*(this.x - other.x)+(this.y - other.y)*(this.y - other.y)), 0.5);
     }

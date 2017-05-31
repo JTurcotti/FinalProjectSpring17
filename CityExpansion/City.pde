@@ -63,7 +63,7 @@ public class City {
     
     public Block blockFromVertex(Vertex v) {
 	Vertex one = v;
-	Vertex two = one.neighbors().get(0);
+	Vertex two = v;//one.neighbors().get(0);
 	
 	Queue<Path> eval = new ArrayDeque<Path>();
 	eval.add((new Path(null, one, one, 0).next(two)));
@@ -71,9 +71,9 @@ public class City {
 
 	do { //this searches breadth first, and is thus gauranteed to find a minimal polygon block
 	    p = eval.remove();
-	    for (Vertex w: p.head.neighbors())
+	    /*	    for (Vertex w: p.head.neighbors())
 		if (w!=p.prev.head)
-		    eval.add(p.next(w));
+		eval.add(p.next(w));*/
 	} while (!p.isCircular());
 	
 	Block b = new Block();
@@ -86,7 +86,7 @@ public class City {
     
     //takes the grid of vertices and populates blocks with the blocks between them
     public void genBlocks() {
-	for (Vertex v: streets.vertices()) {
+	for (Vertex v: streets.vertices) {
 	    Block b = blockFromVertex(v);
 	    b.print(int(random(256)));
 	    blocks.add(b);
